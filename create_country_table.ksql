@@ -1,0 +1,11 @@
+CREATE TABLE COUNTRY_TABLE_STATIC(
+    Key varchar primary key,
+    countryCode varchar,
+    countryName varchar
+) WITH (
+    kafka_topic = 'COUNTRY-CSV',
+    key_format = 'kafka',
+    value_format = 'delimited'
+);
+
+CREATE TABLE COUNTRY_TABLE as SELECT * FROM COUNTRY_TABLE_STATIC;

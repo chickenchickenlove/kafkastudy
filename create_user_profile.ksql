@@ -1,0 +1,15 @@
+
+CREATE STREAM USERPROFILE(
+    userId varchar,
+    firstName varchar,
+    lastName varchar,
+    countryCode varchar,
+    rating double,
+    ts BIGINT
+) WITH (
+    kafka_topic = 'USERPROFILE',
+    value_format = 'json'
+
+);
+
+
