@@ -18,8 +18,14 @@ public class JsonDeserializer<T> implements Deserializer<T> {
     @Override
     public T deserialize(String topic, byte[] data) {
         try {
+            System.out.println("Type = " + type.getName());
+
             return objectMapper.readValue(data, type);
         } catch (IOException e) {
+            System.out.println("HERE");
+            System.out.println(data.toString());
+
+
             throw new RuntimeException(e);
         }
     }

@@ -1,5 +1,7 @@
 package kafkaStreams.domain;
 
+import lombok.NoArgsConstructor;
+
 import java.util.Date;
 import java.util.Objects;
 
@@ -8,6 +10,7 @@ import java.util.Objects;
  * Date: 2/20/16
  * Time: 9:09 AM
  */
+@NoArgsConstructor
 public class Purchase {
 
     private String firstName;

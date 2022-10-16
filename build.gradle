@@ -20,7 +20,7 @@ dependencies {
     implementation 'org.apache.kafka:kafka-streams:3.3.1'
 
     implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.4'
-// https://mvnrepository.com/artifact/org.apache.kafka/kafka-streams
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.3'
 }
 
 test {
