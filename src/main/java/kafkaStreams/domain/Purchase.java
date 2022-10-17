@@ -1,5 +1,6 @@
 package kafkaStreams.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;

@@ -7,7 +7,10 @@ import com.github.javafaker.Name;
 import kafkaStreams.domain.*;
 
 import java.text.DecimalFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -91,12 +94,24 @@ public class DataGenerator {
             double price = Double.parseDouble(faker.commerce().price(4.00, 295.00));
             Date purchaseDate = timestampGenerator.get();
 
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss"); //new format
+            String dateNewFormat = sdf.format(purchaseDate);  //result
+            Date parse = null;
+            try {
+                parse = new SimpleDateFormat("yyyy-MM-dd hh:mm").parse(dateNewFormat);
+            } catch (ParseException e) {
+                throw new RuntimeException(e);
+            }
+
+            System.out.println("dateNewFormat = " + dateNewFormat);
+
+
             Customer customer = customers.get(random.nextInt(numberCustomers));
             Store store = stores.get(random.nextInt(NUMBER_UNIQUE_STORES));
 
             Purchase purchase = Purchase.builder().creditCardNumber(customer.creditCardNumber).customerId(customer.customerId)
                     .department(store.department).employeeId(store.employeeId).firstName(customer.firstName)
-                    .lastName(customer.lastName).itemPurchased(itemPurchased).quanity(quantity).price(price).purchaseDate(purchaseDate)
+                    .lastName(customer.lastName).itemPurchased(itemPurchased).quanity(quantity).price(price).purchaseDate(parse)
                     .zipCode(store.zipCode).storeId(store.storeId).build();
 
 

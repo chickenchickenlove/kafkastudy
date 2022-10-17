@@ -24,23 +24,22 @@ public class ZMartKafkaStreamsApp {
         String sourceTopic = "transactions";
 
         // Serde 설정
-        JsonSerializer<Purchase> purchaseSerializer = createJsonSerializer();
-        GsonDeserializer<Purchase> purchaseDeserializer = createGsonDeserializer(Purchase.class);
 
-        JsonSerializer<PurchasePattern> purchasePatternJsonSerializer = createJsonSerializer();
-        GsonDeserializer<PurchasePattern> purchasePatternGsonDeserializer = createGsonDeserializer(PurchasePattern.class);
+        GsonSerializer<Purchase> purchaseGsonSerializer = new GsonSerializer<>();
+        GsonDeserializer<Purchase> purchaseGsonDeserializer = new GsonDeserializer<>();
 
-        JsonSerializer<RewardAccumulator> rewardAccumulatorJsonSerializer = createJsonSerializer();
-        GsonDeserializer<RewardAccumulator> rewardAccumulatorGsonDeserializer = createGsonDeserializer(GsonDeserializer.class);
+        GsonSerializer<PurchasePattern> purchasePatternGsonSerializer = new GsonSerializer<>();
+        GsonDeserializer<PurchasePattern> purchasePatternGsonDeserializer = new GsonDeserializer<>();
 
+        GsonSerializer<RewardAccumulator> rewardAccumulatorGsonSerializer = new GsonSerializer<>();
+        GsonDeserializer<RewardAccumulator> rewardAccumulatorGsonDeserializer = new GsonDeserializer<>();
 
         // Serde 생성
         Serde<String> stringSerde = Serdes.String();
         Serde<Long> longSerde = Serdes.Long();
-        Serde<PurchasePattern> purchasePatternSerde = Serdes.serdeFrom(purchasePatternJsonSerializer, purchasePatternGsonDeserializer);
-        Serde<RewardAccumulator> rewardAccumulatorSerde = Serdes.serdeFrom(rewardAccumulatorJsonSerializer, rewardAccumulatorGsonDeserializer);
-        Serde<Purchase> purchaseSerde = Serdes.serdeFrom(purchaseSerializer, purchaseDeserializer);
-
+        Serde<PurchasePattern> purchasePatternSerde = Serdes.serdeFrom(purchasePatternGsonSerializer, purchasePatternGsonDeserializer);
+        Serde<RewardAccumulator> rewardAccumulatorSerde = Serdes.serdeFrom(rewardAccumulatorGsonSerializer, rewardAccumulatorGsonDeserializer);
+        Serde<Purchase> purchaseSerde = Serdes.serdeFrom(purchaseGsonSerializer, purchaseGsonDeserializer);
 
 
         // 설정
