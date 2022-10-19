@@ -31,34 +31,36 @@ import java.util.UUID;
 @Slf4j
 public class ZMartKafkaStreamsChapter4 {
 
+    private static final String STORE_NAME = "rewardAccumulator";
+
     public static void main(String[] args) {
 
         String sourceTopic = "transactions";
 
         // Serde 설정
+
         GsonSerializer<Purchase> purchaseGsonSerializer = new GsonSerializer<>();
-        GsonDeserializer<Purchase> purchaseDeserializer = new GsonDeserializer<Purchase>();
+        GsonDeserializer<Purchase> purchaseGsonDeserializer = new GsonDeserializer<>(Purchase.class);
 
         GsonSerializer<PurchasePattern> purchasePatternGsonSerializer = new GsonSerializer<>();
-        GsonDeserializer<PurchasePattern> purchasePatternGsonDeserializer = new GsonDeserializer<>();
+        GsonDeserializer<PurchasePattern> purchasePatternGsonDeserializer = new GsonDeserializer<>(PurchasePattern.class);
 
         GsonSerializer<RewardAccumulator> rewardAccumulatorGsonSerializer = new GsonSerializer<>();
-        GsonDeserializer<RewardAccumulator> rewardAccumulatorGsonDeserializer = new GsonDeserializer<>();
+        GsonDeserializer<RewardAccumulator> rewardAccumulatorGsonDeserializer = new GsonDeserializer<>(RewardAccumulator.class);
 
         // Serde 생성
         Serde<String> stringSerde = Serdes.String();
         Serde<Long> longSerde = Serdes.Long();
-        Serde<Integer> integerSerde = Serdes.Integer();
-
         Serde<PurchasePattern> purchasePatternSerde = Serdes.serdeFrom(purchasePatternGsonSerializer, purchasePatternGsonDeserializer);
         Serde<RewardAccumulator> rewardAccumulatorSerde = Serdes.serdeFrom(rewardAccumulatorGsonSerializer, rewardAccumulatorGsonDeserializer);
-        Serde<Purchase> purchaseSerde = Serdes.serdeFrom(purchaseGsonSerializer, purchaseDeserializer);
+        Serde<Purchase> purchaseSerde = Serdes.serdeFrom(purchaseGsonSerializer, purchaseGsonDeserializer);
+        Serde<Integer> integerSerde = Serdes.Integer();
+
 
         // 설정
         Properties props = new Properties();
         props.setProperty(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.setProperty(StreamsConfig.APPLICATION_ID_CONFIG, UUID.randomUUID().toString());
-        props.setProperty(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, purchaseSerde.getClass().getName());
 
         // topology 생성 시작
         StreamsBuilder streamsBuilder = new StreamsBuilder();
@@ -75,46 +77,44 @@ public class ZMartKafkaStreamsChapter4 {
         KStream<String, RewardAccumulator> rewardAccumulatorKStream = purchaseKStream.mapValues(value -> RewardAccumulator.builder(value).build());
         KStream<Long, Purchase> purchaseFilterStream = purchaseKStream.filter((key, value) -> value.getPrice() > 5.00).selectKey(purchaseFilterStreamNewKey);
 
+
+        // StateStore 처리하기
+        KeyValueMapper<String, Purchase, String> customerIdKeyValueMapper = (key, purchase) -> purchase.getCustomerId();
+        Repartitioned<String, Purchase> repartitioned = Repartitioned.with(stringSerde, purchaseSerde).withNumberOfPartitions(3);
+        KStream<String, Purchase> repartitionStream = purchaseKStream.selectKey(customerIdKeyValueMapper).repartition(repartitioned);
+
+
+        KeyValueBytesStoreSupplier storeSupplier = Stores.inMemoryKeyValueStore(STORE_NAME);
+        StoreBuilder<KeyValueStore<String, Integer>> keyValueStoreStoreBuilder = Stores.<String, Integer>keyValueStoreBuilder(storeSupplier, stringSerde, integerSerde);
+        streamsBuilder.addStateStore(keyValueStoreStoreBuilder);
+
+        repartitionStream.transformValues(() ->
+                new RewardValueTransformer(STORE_NAME), STORE_NAME).to("STATE_REPARTITION",
+                Produced.with(stringSerde, rewardAccumulatorSerde));
+
+        repartitionStream.print(Printed.<String, Purchase>toSysOut().withLabel("HELLO"));
+
+
         // foreach 설정
-//        ForeachAction<String, Purchase> purchaseDBForeach = (key, value) -> log.info("key = {}, value = {}", key, value);
-//        purchaseKStream.foreach(purchaseDBForeach);
+        ForeachAction<String, Purchase> purchaseDBForeach = (key, value) -> log.info("key = {}, value = {}", key, value);
+        purchaseKStream.foreach(purchaseDBForeach);
 
-
-        // rewardAccumulatorKStream 처리
-        String rewardsStateStoreName = "rewardsPointsStore";
-        RewardStreamRepartition rewardStreamRepartition = new RewardStreamRepartition();
-
-        KeyValueBytesStoreSupplier storeSupplier = Stores.inMemoryKeyValueStore(rewardsStateStoreName);
-        StoreBuilder<KeyValueStore<String, Integer>> storeBuilder = Stores.keyValueStoreBuilder(storeSupplier, stringSerde, integerSerde);
-        streamsBuilder.addStateStore(storeBuilder);
-
-
-        // TODO : 확인
-        KeyValueMapper<String, Purchase, String> repartitionKeyValueMapper = (key, value) -> value.getCustomerId();
-        KStream<String, Purchase> stringPurchaseKStream = purchaseKStream.selectKey(repartitionKeyValueMapper);
-        stringPurchaseKStream.print(Printed.<String, Purchase>toSysOut().withLabel("repartition"));
-//
-        Repartitioned<String, Purchase> repartitioned = Repartitioned.as("hello-this").with(stringSerde, purchaseSerde);
-        KStream<String, Purchase> repartition = stringPurchaseKStream.repartition(repartitioned);
-        repartition.print(Printed.<String, Purchase>toSysOut().withLabel("TEST"));
-
-
-
-        // 아래는 동작하는 코드다.
-        KStream<String, RewardAccumulator> stringRewardAccumulatorKStream = purchaseKStream.transformValues(() -> new RewardValueTransformer(rewardsStateStoreName), rewardsStateStoreName);
-        stringRewardAccumulatorKStream.to("final", Produced.with(stringSerde, rewardAccumulatorSerde));
-        stringRewardAccumulatorKStream.print(Printed.toSysOut());
+        // print 설정
+//        purchaseKStream.print(Printed.<String, Purchase>toSysOut().withLabel("purchaseKStream"));
+//        purchasePatternKStream.print(Printed.<String, PurchasePattern>toSysOut().withLabel("purchasePattern"));
+//        rewardAccumulatorKStream.print(Printed.<String, RewardAccumulator>toSysOut().withLabel("rewardAccumulatorKStream"));
+//        purchaseFilterStream.print(Printed.<Long, Purchase>toSysOut().withLabel("purchaseFilterStream"));
 
         // sink 설정
-        purchasePatternKStream.to("patterns",Produced.with(stringSerde,purchasePatternSerde));
-        rewardAccumulatorKStream.to("rewards",Produced.with(stringSerde,rewardAccumulatorSerde));
-        purchaseFilterStream.to("purchase",Produced.with(longSerde,purchaseSerde));
+        purchasePatternKStream.to("patterns", Produced.with(stringSerde, purchasePatternSerde));
+        rewardAccumulatorKStream.to("rewards", Produced.with(stringSerde, rewardAccumulatorSerde));
+        purchaseFilterStream.to("purchase", Produced.with(longSerde, purchaseSerde));
 
-                    // stream 시작
+        // stream 시작
         KafkaStreams kafkaStreams = new KafkaStreams(streamsBuilder.build(), props);
         kafkaStreams.start();
 
-}
+    }
 
     private static <T> JsonSerializer<T> createJsonSerializer() {
         return new JsonSerializer<T>();
