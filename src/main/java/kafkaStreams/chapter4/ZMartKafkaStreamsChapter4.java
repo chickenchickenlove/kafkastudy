@@ -1,13 +1,16 @@
 package kafkaStreams.chapter4;
 
+import kafka.log.LogConfig;
 import kafkaStreams.chapter3.GsonDeserializer;
 import kafkaStreams.chapter3.GsonSerializer;
 import kafkaStreams.chapter3.JsonDeserializer;
 import kafkaStreams.chapter3.JsonSerializer;
+import kafkaStreams.domain.CorrelatedPurchase;
 import kafkaStreams.domain.Purchase;
 import kafkaStreams.domain.PurchasePattern;
 import kafkaStreams.domain.RewardAccumulator;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -15,7 +18,7 @@ import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.processor.StreamPartitioner;
+import org.apache.kafka.streams.processor.*;
 import org.apache.kafka.streams.processor.api.FixedKeyProcessor;
 import org.apache.kafka.streams.processor.api.FixedKeyProcessorSupplier;
 import org.apache.kafka.streams.processor.internals.DefaultStreamPartitioner;
@@ -24,9 +27,8 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 
-import java.util.Properties;
-import java.util.Set;
-import java.util.UUID;
+import java.time.Duration;
+import java.util.*;
 
 @Slf4j
 public class ZMartKafkaStreamsChapter4 {
@@ -48,6 +50,9 @@ public class ZMartKafkaStreamsChapter4 {
         GsonSerializer<RewardAccumulator> rewardAccumulatorGsonSerializer = new GsonSerializer<>();
         GsonDeserializer<RewardAccumulator> rewardAccumulatorGsonDeserializer = new GsonDeserializer<>(RewardAccumulator.class);
 
+        GsonSerializer<CorrelatedPurchase> correlatedPurchaseGsonSerializer = new GsonSerializer<>();
+        GsonDeserializer<CorrelatedPurchase> correlatedPurchaseGsonDeserializer = new GsonDeserializer<>(CorrelatedPurchase.class);
+
         // Serde 생성
         Serde<String> stringSerde = Serdes.String();
         Serde<Long> longSerde = Serdes.Long();
@@ -55,16 +60,22 @@ public class ZMartKafkaStreamsChapter4 {
         Serde<RewardAccumulator> rewardAccumulatorSerde = Serdes.serdeFrom(rewardAccumulatorGsonSerializer, rewardAccumulatorGsonDeserializer);
         Serde<Purchase> purchaseSerde = Serdes.serdeFrom(purchaseGsonSerializer, purchaseGsonDeserializer);
         Serde<Integer> integerSerde = Serdes.Integer();
+        Serde<CorrelatedPurchase> correlatedPurchaseSerde = Serdes.serdeFrom(correlatedPurchaseGsonSerializer, correlatedPurchaseGsonDeserializer);
+
 
 
         // 설정
         Properties props = new Properties();
         props.setProperty(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.setProperty(StreamsConfig.APPLICATION_ID_CONFIG, UUID.randomUUID().toString());
+        props.setProperty(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, FailOnInvalidTimestamp.class.getName());
 
         // topology 생성 시작
         StreamsBuilder streamsBuilder = new StreamsBuilder();
-        KStream<String, Purchase> purchaseKStream = streamsBuilder.stream(sourceTopic, Consumed.with(stringSerde, purchaseSerde))
+        KStream<String, Purchase> purchaseKStream = streamsBuilder.stream(sourceTopic,
+                        Consumed
+                        .with(stringSerde, purchaseSerde)
+                        .withTimestampExtractor(new TransactionTimestampExtractor()))
                 .mapValues(value -> Purchase.builder(value).maskCreditCard().build());
 
 
@@ -104,6 +115,25 @@ public class ZMartKafkaStreamsChapter4 {
 //        purchasePatternKStream.print(Printed.<String, PurchasePattern>toSysOut().withLabel("purchasePattern"));
 //        rewardAccumulatorKStream.print(Printed.<String, RewardAccumulator>toSysOut().withLabel("rewardAccumulatorKStream"));
 //        purchaseFilterStream.print(Printed.<Long, Purchase>toSysOut().withLabel("purchaseFilterStream"));
+
+        // Branch 생성
+        Map<String, KStream<String, Purchase>> branches = purchaseKStream.selectKey((key, value) -> value.getCustomerId()).
+                split(Named.as("Branch-")).
+                branch((key, purchase) -> purchase.getDepartment().equalsIgnoreCase("coffee"), Branched.as("coffee")).
+                branch((key, purchase) -> purchase.getDepartment().equalsIgnoreCase("electronics"), Branched.as("electronics")).noDefaultBranch();
+
+        KStream<String, Purchase> coffeeStream = branches.get("Branch-coffee");
+        KStream<String, Purchase> electronicStream = branches.get("Branch-electronics");
+
+        //Join (뒷쪽은 5초까지만 윈도우 설정)
+        PurchaseJoiner purchaseJoiner = new PurchaseJoiner();
+        JoinWindows twentyMinutesWindow = JoinWindows.ofTimeDifferenceWithNoGrace(Duration.ofMinutes(20)).after(Duration.ofMillis(5000));
+
+        KStream<String, CorrelatedPurchase> joinedKStream = coffeeStream.join(
+                electronicStream, purchaseJoiner, twentyMinutesWindow,
+                StreamJoined.with(stringSerde, purchaseSerde, purchaseSerde));
+
+        joinedKStream.print(Printed.<String, CorrelatedPurchase>toSysOut().withLabel("JoinedStream"));
 
         // sink 설정
         purchasePatternKStream.to("patterns", Produced.with(stringSerde, purchasePatternSerde));
