@@ -64,7 +64,6 @@ public class MockDataProducer {
                 List<String> jsonValues = convertToJson(purchases);
                 for (String value : jsonValues) {
                     ProducerRecord<String, String> record = new ProducerRecord<>(TRANSACTIONS_TOPIC, null, value);
-                    System.out.println("record.toString() = " + record.toString());
                     producer.send(record, callback);
                 }
                 LOG.info("Record batch sent");
@@ -161,6 +160,7 @@ public class MockDataProducer {
                 ProducerRecord<String, String> record = new ProducerRecord<>(STOCK_TRANSACTIONS_TOPIC, transaction.getSymbol(), jsonTransaction);
                 producer.send(record, callback);
             }
+
             LOG.info("Stock Transactions for IQ Sent");
 
             try {

@@ -103,9 +103,6 @@ public class DataGenerator {
                 throw new RuntimeException(e);
             }
 
-            System.out.println("dateNewFormat = " + dateNewFormat);
-
-
             Customer customer = customers.get(random.nextInt(numberCustomers));
             Store store = stores.get(random.nextInt(NUMBER_UNIQUE_STORES));
 
