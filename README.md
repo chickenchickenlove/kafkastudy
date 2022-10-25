@@ -11,3 +11,4 @@
 - Join Stream 내부 동작 (https://ojt90902.tistory.com/1128)
 - StreamTask가 생성되는 과정 (https://ojt90902.tistory.com/1127)
 - Source Topic에서 메세지 가져오기 (https://ojt90902.tistory.com/1125)
+- Kafka Streams : KTable과 Cache 내부동작 (https://ojt90902.tistory.com/1130)
