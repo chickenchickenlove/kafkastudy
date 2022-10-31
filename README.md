@@ -12,3 +12,5 @@
 - StreamTask가 생성되는 과정 (https://ojt90902.tistory.com/1127)
 - Source Topic에서 메세지 가져오기 (https://ojt90902.tistory.com/1125)
 - Kafka Streams : KTable과 Cache 내부동작 (https://ojt90902.tistory.com/1130)
+- Kafka Streams : Session Window 동작 (https://ojt90902.tistory.com/1135)
+- Kafka Streams : Tumbling Window, Hopping Window 동작 (https://ojt90902.tistory.com/1136)
