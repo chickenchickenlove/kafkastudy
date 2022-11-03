@@ -49,7 +49,7 @@ public class TumblingWindowStream {
                                 .withOffsetResetPolicy(EARLIEST))
                 .groupBy((noKey, value) -> TransactionSummary.from(value),
                         Grouped.with(transactionSummarySerde, stockTransactionSerde))
-                .windowedBy(TimeWindows.ofSizeWithNoGrace(Duration.ofSeconds(90)).advanceBy(Duration.ofSeconds(15))).count();
+                .windowedBy(TimeWindows.ofSizeWithNoGrace(Duration.ofSeconds(90))).count();
 
 
         countStream.toStream().print(Printed.toSysOut());
