@@ -127,7 +127,7 @@ public class DataGenerator {
         List<BeerPurchase> beerPurchases = new ArrayList<>(number);
         Faker faker = new Faker();
         for (int i = 0; i < number; i++) {
-            Currency currency = Currency.values()[faker.number().numberBetween(1,4)];
+            Currency currency = Currency.values()[faker.number().numberBetween(1,3)];
             String beerType = faker.beer().name();
             int cases = faker.number().numberBetween(1,15);
             double totalSale = faker.number().randomDouble(3,12, 200);

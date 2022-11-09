@@ -11,6 +11,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.kstream.internals.Change;
 import org.apache.kafka.streams.state.KeyValueStore;
 
 import java.text.NumberFormat;
@@ -52,10 +53,11 @@ public class ReduceStream {
 
         props.setProperty(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.setProperty(StreamsConfig.APPLICATION_ID_CONFIG, UUID.randomUUID().toString());
+        props.setProperty(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "1000");
 
         StreamsBuilder builder = new StreamsBuilder();
         KStream<String, StockTransaction> sourceStream = builder.stream(STOCK_TRANSACTIONS_TOPIC,
-                Consumed.with(stringSerde, stockTransactionSerde).withOffsetResetPolicy(EARLIEST));
+                Consumed.with(stringSerde, stockTransactionSerde).withOffsetResetPolicy(EARLIEST)).peek((key, value) -> System.out.println("value = " + value));
 
         // 리파티셔닝을 할 때는 내부적으로 Internal Topic을 하나 더 만든다.
         // 그것은 Broker에게 Log를 전송한다는 것이다. 따라서 Key / Value Serde가 필요하다.
@@ -94,7 +96,7 @@ public class ReduceStream {
         shareVolume.groupBy((key, value) -> KeyValue.pair(value.getIndustry(), value),
                         Grouped.with(stringSerde, shareVolumeSerde))
                 .aggregate(
-                        () -> fixedQue,
+                        () -> new FixedSizePriorityQueue<>(shareVolumeComparator, 5),
                         (key, value, aggregate) -> aggregate.add(value),
                         (key, value, aggregate) -> aggregate.remove(value),
                         Materialized.with(stringSerde, fixedSizePriorityQueueSerde))

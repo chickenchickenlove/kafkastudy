@@ -85,7 +85,6 @@ public class MockDataProducer {
 
     public static void produceNewsAndStockTransactions(int numberIterations, int numberTradedCompanies, int numberCustomers) {
         List<String> news = DataGenerator.generateFinancialNews();
-
     }
 
     public static void produceBeerPurchases(int numberIterations) {
@@ -319,7 +318,7 @@ public class MockDataProducer {
                 }
                 LOG.info("Stock updates sent");
                 try {
-                    Thread.sleep(4000);
+                    Thread.sleep(10);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
