@@ -76,7 +76,6 @@ public class Chapter6Stream {
                         purchaseProcessor);
 
 
-
         KafkaStreams kafkaStreams = new KafkaStreams(topology, props);
         kafkaStreams.start();
 
