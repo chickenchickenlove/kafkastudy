@@ -1,29 +1,21 @@
 package kafkaStreams.chapter5;
 
-import kafkaStreams.chapter3.GsonDeserializer;
-import kafkaStreams.chapter3.GsonSerializer;
-import kafkaStreams.client.producer.MockDataProducer;
+import kafkaStreams.util.GsonDeserializer;
+import kafkaStreams.util.GsonSerializer;
 import kafkaStreams.domain.StockTransaction;
 import kafkaStreams.domain.TransactionSummary;
-import kafkaStreams.util.CustomDateGenerator;
-import kafkaStreams.util.DataGenerator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
-import org.apache.kafka.streams.KafkaStreams;
-import org.apache.kafka.streams.KeyValue;
-import org.apache.kafka.streams.StreamsBuilder;
-import org.apache.kafka.streams.Topology;
+import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
 
-import java.security.KeyPair;
 import java.time.Duration;
 import java.util.Properties;
 
 import static kafkaStreams.util.Topics.CLIENTS;
 import static kafkaStreams.util.Topics.COMPANIES;
 import static org.apache.kafka.streams.Topology.AutoOffsetReset.EARLIEST;
-import static org.apache.kafka.streams.state.RocksDBConfigSetter.LOG;
 
 @Slf4j
 public class GlobalKTableJoin {

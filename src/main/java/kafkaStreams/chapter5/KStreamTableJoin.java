@@ -1,7 +1,7 @@
 package kafkaStreams.chapter5;
 
-import kafkaStreams.chapter3.GsonDeserializer;
-import kafkaStreams.chapter3.GsonSerializer;
+import kafkaStreams.util.GsonDeserializer;
+import kafkaStreams.util.GsonSerializer;
 import kafkaStreams.domain.StockTransaction;
 import kafkaStreams.domain.TransactionSummary;
 import org.apache.kafka.common.serialization.Serde;

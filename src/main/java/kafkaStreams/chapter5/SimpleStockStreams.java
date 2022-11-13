@@ -1,21 +1,16 @@
 package kafkaStreams.chapter5;
 
-import kafkaStreams.chapter3.GsonDeserializer;
-import kafkaStreams.chapter3.GsonSerializer;
-import kafkaStreams.client.producer.MockDataProducer;
+import kafkaStreams.util.GsonDeserializer;
+import kafkaStreams.util.GsonSerializer;
 import kafkaStreams.domain.StockTickerData;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
+import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.kstream.internals.MaterializedInternal;
-import org.apache.kafka.streams.processor.StateStore;
 import org.apache.kafka.streams.processor.WallclockTimestampExtractor;
 import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
 import org.apache.kafka.streams.state.KeyValueStore;
@@ -52,27 +47,31 @@ public class SimpleStockStreams {
         KeyValueBytesStoreSupplier storeSupplier = Stores.inMemoryKeyValueStore("hello");
         StoreBuilder<KeyValueStore<String, StockTickerData>> keyValueStoreStoreBuilder = Stores.keyValueStoreBuilder(storeSupplier, stringSerde, stockTickerDataSerde);
 
+        // StateStore를 사용한 KTable → 이렇게 하면 최신값만 나옴
 
-        KeyValueBytesStoreSupplier storeSupplier1 = Stores.inMemoryKeyValueStore("hello2");
-        KeyValueBytesStoreSupplier storeSupplier2 = Stores.persistentKeyValueStore("rocksdbdbdb");
-
-
-
+        builder.addStateStore(keyValueStoreStoreBuilder);
+        KeyValueBytesStoreSupplier persistentKeyValueStore = Stores.persistentKeyValueStore("persistentKeyValueStore");
+        Materialized<String, StockTickerData, KeyValueStore<Bytes, byte[]>> as = Materialized.as(persistentKeyValueStore);
         KTable<String, StockTickerData> stockTickerTable = builder.
                 table(STOCK_TICKER_TABLE_TOPIC, Consumed.with(stringSerde, stockTickerDataSerde),
-                        Materialized.as(storeSupplier2));
-        stockTickerTable.toStream().print(Printed.<String, StockTickerData>toSysOut().withLabel("Stocks-KTable"));
+                        as);
 
 
+        stockTickerTable.toStream().print(Printed.<String, StockTickerData>toSysOut().withLabel("Stocks-KTable-With-StateStore"));
 
-//
-//        KStream<String, StockTickerData> stockTickerStream = builder.stream(STOCK_TICKER_STREAM_TOPIC,
-//                Consumed.with(stringSerde, stockTickerDataSerde));
+//         StateStore를 사용하지 않은 KTable → 메세지가 전달될 때 마다 나옴
+//        KTable<String, StockTickerData> stockTickerTable1 = builder.
+//                table(STOCK_TICKER_TABLE_TOPIC, Consumed.with(stringSerde, stockTickerDataSerde));
+//        stockTickerTable1.toStream().print(Printed.<String, StockTickerData>toSysOut().withLabel("Stocks-KTable-Without-StateStore"));
+
+        // KStream → 메세지가 전달될 때마다 나옴.
+        KStream<String, StockTickerData> stockTickerStream = builder.stream(STOCK_TICKER_STREAM_TOPIC,
+                Consumed.with(stringSerde, stockTickerDataSerde));
 
 
-//        stockTickerStream.print(Printed.<String, StockTickerData>toSysOut().withLabel( "Stocks-KStream"));
+        stockTickerStream.print(Printed.<String, StockTickerData>toSysOut().withLabel( "Stocks-KStream"));
 
-//        MockDataProducer.produceStockTickerData(numberCompanies, iterations);
+//        MockDataProducer.produceStockTickerData(3, 3);
 
 
 
@@ -80,9 +79,9 @@ public class SimpleStockStreams {
 //        LOG.info("KTable vs KStream output started");
         kafkaStreams.cleanUp();
         kafkaStreams.start();
-        Thread.sleep(100000);
+        Thread.sleep(15000);
 //        LOG.info("Shutting down KTable vs KStream Application now");
-        kafkaStreams.close();
+//        kafkaStreams.close();
 //        MockDataProducer.shutdown();
     }
 
@@ -94,8 +93,8 @@ public class SimpleStockStreams {
         props.put(ConsumerConfig.CLIENT_ID_CONFIG, "KStreamVSKTable_client");
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
         props.put(ConsumerConfig.AUTO_COMMIT_INTERVAL_MS_CONFIG, "30000");
-        props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, 10000);
-        props.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 1000000);
+        props.put(StreamsConfig.COMMIT_INTERVAL_MS_CONFIG, "1400000000");
+        props.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 200);
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, "1");
         props.put(ConsumerConfig.METADATA_MAX_AGE_CONFIG, "10000");

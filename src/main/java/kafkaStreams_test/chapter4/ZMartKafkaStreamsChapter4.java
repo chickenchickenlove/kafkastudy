@@ -1,7 +1,7 @@
 package kafkaStreams_test.chapter4;
 
-import kafkaStreams.chapter3.GsonDeserializer;
-import kafkaStreams.chapter3.GsonSerializer;
+import kafkaStreams.util.GsonDeserializer;
+import kafkaStreams.util.GsonSerializer;
 import kafkaStreams.chapter3.JsonSerializer;
 import kafkaStreams.domain.Purchase;
 import kafkaStreams.domain.PurchasePattern;

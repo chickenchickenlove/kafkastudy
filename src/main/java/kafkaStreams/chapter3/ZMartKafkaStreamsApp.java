@@ -1,10 +1,10 @@
 package kafkaStreams.chapter3;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import kafkaStreams.domain.Purchase;
 import kafkaStreams.domain.PurchasePattern;
 import kafkaStreams.domain.RewardAccumulator;
+import kafkaStreams.util.GsonDeserializer;
+import kafkaStreams.util.GsonSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;

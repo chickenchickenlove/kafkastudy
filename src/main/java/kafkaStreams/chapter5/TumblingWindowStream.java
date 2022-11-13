@@ -1,7 +1,7 @@
 package kafkaStreams.chapter5;
 
-import kafkaStreams.chapter3.GsonDeserializer;
-import kafkaStreams.chapter3.GsonSerializer;
+import kafkaStreams.util.GsonDeserializer;
+import kafkaStreams.util.GsonSerializer;
 import kafkaStreams.domain.StockTransaction;
 import kafkaStreams.domain.TransactionSummary;
 import org.apache.kafka.common.serialization.Serde;
@@ -9,9 +9,7 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsBuilder;
 import org.apache.kafka.streams.StreamsConfig;
-import org.apache.kafka.streams.Topology;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.kstream.internals.AbstractKStreamTimeWindowAggregateProcessor;
 
 import java.time.Duration;
 import java.util.Properties;

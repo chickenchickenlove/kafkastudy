@@ -1,8 +1,8 @@
 package kafkaStreams.chapter5;
 
 import kafkaStreams.chapter3.FixedSizePriorityQueue;
-import kafkaStreams.chapter3.GsonDeserializer;
-import kafkaStreams.chapter3.GsonSerializer;
+import kafkaStreams.util.GsonDeserializer;
+import kafkaStreams.util.GsonSerializer;
 import kafkaStreams.domain.ShareVolume;
 import kafkaStreams.domain.StockTransaction;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +11,6 @@ import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.common.utils.Bytes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.kstream.*;
-import org.apache.kafka.streams.kstream.internals.Change;
 import org.apache.kafka.streams.state.KeyValueStore;
 
 import java.text.NumberFormat;

@@ -1,7 +1,7 @@
 package kafkaStreams.chapter4_test;
 
-import kafkaStreams.chapter3.GsonDeserializer;
-import kafkaStreams.chapter3.GsonSerializer;
+import kafkaStreams.util.GsonDeserializer;
+import kafkaStreams.util.GsonSerializer;
 import kafkaStreams.chapter3.JsonSerializer;
 import kafkaStreams.chapter4.RewardValueTransformer;
 import kafkaStreams.domain.CorrelatedPurchase;
@@ -19,8 +19,6 @@ import org.apache.kafka.streams.state.KeyValueBytesStoreSupplier;
 import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
-import org.apache.kafka.streams.state.internals.InMemoryKeyValueStore;
-import org.apache.kafka.streams.state.internals.KeyValueStoreBuilder;
 
 import java.time.Duration;
 import java.util.Map;

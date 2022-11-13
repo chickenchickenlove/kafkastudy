@@ -30,7 +30,6 @@ public class StockPerformanceProcessor extends ContextualProcessor<String, Stock
         StockPerformancePunctuator punctuator = new StockPerformancePunctuator(differentialThreshold,
                 context,
                 keyValueStore);
-
         super.context().schedule(Duration.ofSeconds(10), PunctuationType.WALL_CLOCK_TIME, punctuator);
     }
 
@@ -38,8 +37,8 @@ public class StockPerformanceProcessor extends ContextualProcessor<String, Stock
     @Override
     public void process(Record<String, StockTransaction> record) {
 
-        String symbol = record.key();
         StockTransaction stockTransaction = record.value();
+        String symbol = stockTransaction.getSymbol();
 
         if (symbol == null) {
             return;

@@ -1,5 +1,6 @@
 package kafkaStreams.client.producer;
 
+import com.fasterxml.jackson.annotation.JsonEnumDefaultValue;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import kafkaStreams.domain.*;
@@ -79,9 +80,9 @@ public class MockDataProducer {
         executorService.submit(generateTask);
     }
 
-    public static void produceStockTransactions(int numberIterations) {
-        produceStockTransactions(numberIterations, NUMBER_TRADED_COMPANIES, NUMBER_UNIQUE_CUSTOMERS, false);
-    }
+//    public static void produceStockTransactions(int numberIterations) {
+//        produceStockTransactions(numberIterations, NUMBER_TRADED_COMPANIES, NUMBER_UNIQUE_CUSTOMERS, false);
+//    }
 
     public static void produceNewsAndStockTransactions(int numberIterations, int numberTradedCompanies, int numberCustomers) {
         List<String> news = DataGenerator.generateFinancialNews();
@@ -95,6 +96,7 @@ public class MockDataProducer {
                 List<BeerPurchase> beerPurchases = DataGenerator.generateBeerPurchases( 50);
                 List<String> jsonTransactions = convertToJson(beerPurchases);
                 for (String jsonTransaction : jsonTransactions) {
+                    System.out.println("jsonTransaction = " + jsonTransaction);
                     ProducerRecord<String, String> record = new ProducerRecord<>(Topics.POPS_HOPS_PURCHASES.topicName(), null, jsonTransaction);
                     producer.send(record, callback);
                 }
@@ -117,8 +119,18 @@ public class MockDataProducer {
         List<DataGenerator.Customer> customers = getCustomers(numberCustomers);
 
         if (populateGlobalTables) {
-            populateCompaniesGlobalKTable(companies);
-            populateCustomersGlobalKTable(customers);
+            int myCount = 0;
+            while (myCount++ < 100) {
+                populateCompaniesGlobalKTable(companies);
+                populateCustomersGlobalKTable(customers);
+                System.out.println("myCount = " + myCount);
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
         }
 
         publishFinancialNews(companies);
@@ -268,6 +280,7 @@ public class MockDataProducer {
         for (PublicTradedCompany company : companies) {
             ProducerRecord<String, String> record = new ProducerRecord<>(COMPANIES.topicName(), company.getSymbol(), company.getName());
             producer.send(record, callback);
+            System.out.println("i send");
         }
     }
 

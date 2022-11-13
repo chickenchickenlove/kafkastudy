@@ -1,21 +1,16 @@
 package kafkaStreams.chapter6;
 
-import kafkaStreams.chapter3.GsonDeserializer;
-import kafkaStreams.chapter3.GsonSerializer;
+import kafkaStreams.util.GsonDeserializer;
+import kafkaStreams.util.GsonSerializer;
 import kafkaStreams.chapter6.processor.BeerPurchaseProcessor;
 import kafkaStreams.domain.BeerPurchase;
-import kafkaStreams.util.Topics;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.KafkaStreams;
 import org.apache.kafka.streams.StreamsConfig;
 import org.apache.kafka.streams.Topology;
-import org.apache.kafka.streams.kstream.ForeachAction;
 import org.apache.kafka.streams.kstream.internals.KStreamPrint;
-import org.apache.kafka.streams.processor.TimestampExtractor;
 import org.apache.kafka.streams.processor.UsePartitionTimeOnInvalidTimestamp;
-import org.apache.kafka.streams.processor.api.Processor;
-import org.apache.kafka.streams.processor.api.ProcessorSupplier;
 
 import java.util.Properties;
 import java.util.UUID;
