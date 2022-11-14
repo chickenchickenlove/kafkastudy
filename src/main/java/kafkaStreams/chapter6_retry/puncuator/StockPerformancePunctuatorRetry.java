@@ -35,7 +35,5 @@ public class StockPerformancePunctuatorRetry implements Punctuator {
                 }
             }
         }
-
-
     }
 }

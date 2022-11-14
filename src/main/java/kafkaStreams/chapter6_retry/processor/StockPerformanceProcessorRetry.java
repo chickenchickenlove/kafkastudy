@@ -11,6 +11,7 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import java.time.Duration;
 import java.time.Instant;
 
+import static org.apache.kafka.streams.processor.PunctuationType.STREAM_TIME;
 import static org.apache.kafka.streams.processor.PunctuationType.WALL_CLOCK_TIME;
 
 public class StockPerformanceProcessorRetry extends ContextualProcessor<String, StockTransaction, String, StockPerformance> {
@@ -32,7 +33,7 @@ public class StockPerformanceProcessorRetry extends ContextualProcessor<String, 
         // Processor가 초기화 될 때, 셋팅한다.
         keyValueStore = context.getStateStore(stateStoreName);
         StockPerformancePunctuatorRetry punctuatorRetry = new StockPerformancePunctuatorRetry(keyValueStore, context, differentialThreshold);
-        context.schedule(Duration.ofSeconds(15), WALL_CLOCK_TIME, punctuatorRetry);
+        context.schedule(Duration.ofSeconds(15), STREAM_TIME, punctuatorRetry);
     }
 
     @Override
