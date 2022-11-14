@@ -4,6 +4,7 @@ import kafka.server.KafkaConfig;
 import kafkaStreams.chapter5.InitProducerProperty;
 import kafkaStreams.chapter6.processor.ClickEventProcessor;
 import kafkaStreams.chapter6.processor.CogroupingProcessor;
+import kafkaStreams.chapter6.processor.CogroupingProcessorWithPunctuator;
 import kafkaStreams.chapter6.processor.StockTransactionProcessor;
 import kafkaStreams.domain.ClickEvent;
 import kafkaStreams.domain.StockTransaction;
@@ -81,7 +82,7 @@ public class Chapter6CoGroupStream {
                         ClickEventProcessor::new,
                         "Events-source")
                 .addProcessor("CoGrouping-Processor",
-                        () -> new CogroupingProcessor(storeName),
+                        () -> new CogroupingProcessorWithPunctuator(storeName),
                         "Txn-processor", "Events-Processor")
                 .addStateStore(keyValueStoreStoreBuilder, "CoGrouping-Processor")
                 .addProcessor("printer",
