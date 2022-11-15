@@ -12,6 +12,7 @@ import org.apache.kafka.streams.kstream.*;
 
 import java.time.Duration;
 import java.util.Properties;
+import java.util.Set;
 
 import static kafkaStreams.util.Topics.CLIENTS;
 import static kafkaStreams.util.Topics.COMPANIES;
@@ -67,7 +68,21 @@ public class GlobalKTableJoin {
                         .leftJoin(clients, (key, value) -> value.getCustomerId(), (readOnlyKey, value1, value2) -> value1.withCustomerName(value2))
                                 .print(Printed.<String, TransactionSummary>toSysOut().withLabel("My Resolved"));
 
-        KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), props);
+
+        Topology topology = builder.build();
+        TopologyDescription describe = topology.describe();
+
+        Set<TopologyDescription.Subtopology> subtopologies = describe.subtopologies();
+        for (TopologyDescription.Subtopology subtopology : subtopologies) {
+            System.out.println("subtopology = " + subtopology);
+        }
+
+        Set<TopologyDescription.GlobalStore> globalStores = describe.globalStores();
+        for (TopologyDescription.GlobalStore globalStore : globalStores) {
+            System.out.println("globalStore = " + globalStore);
+        }
+
+        KafkaStreams kafkaStreams = new KafkaStreams(topology, props);
         kafkaStreams.start();
     }
 

@@ -1,8 +1,10 @@
 package kafkaStreams.chapter7;
 
-import com.google.gson.internal.Streams;
 import kafkaStreams.chapter5.InitProducerProperty;
 import kafkaStreams.chapter6.processor.MyStockTransactionProcessorWithPunctuator;
+import kafkaStreams.chapter7.chapter7interceptor.ClicksProducerInterceptor;
+import kafkaStreams.chapter7.chapter7interceptor.StockTransactionConsumerInterceptor;
+import kafkaStreams.chapter7.chapter7interceptor.StockTransactionProducerInterceptor;
 import kafkaStreams.domain.StockTransaction;
 import kafkaStreams.util.GsonDeserializer;
 import kafkaStreams.util.GsonSerializer;
@@ -20,7 +22,6 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
@@ -42,8 +43,7 @@ public class Chapter6ProcessorApiDslStream {
                 List.of(StockTransactionConsumerInterceptor.class.getName()));
         props.setProperty(StreamsConfig.consumerPrefix(ConsumerConfig.INTERCEPTOR_CLASSES_CONFIG), StockTransactionConsumerInterceptor.class.getName());
         props.put(StreamsConfig.producerPrefix(ProducerConfig.INTERCEPTOR_CLASSES_CONFIG),
-                List.of(StockTransactionProducerInterceptor.class.getName(),
-                        ClicksProducerInterceptor.class.getName()));
+                List.of(StockTransactionProducerInterceptor.class.getName(),ClicksProducerInterceptor.class.getName()));
 
 
         GsonSerializer<StockTransaction> stockTransactionGsonSerializer = new GsonSerializer<>();

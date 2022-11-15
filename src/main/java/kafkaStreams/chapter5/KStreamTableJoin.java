@@ -11,6 +11,7 @@ import org.apache.kafka.streams.kstream.*;
 
 import java.time.Duration;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.apache.kafka.streams.Topology.AutoOffsetReset.EARLIEST;
@@ -73,7 +74,20 @@ public class KStreamTableJoin {
         joinedStream.print(Printed.<String, String>toSysOut().withLabel("Transactions and News"));
 
 
-        KafkaStreams kafkaStreams = new KafkaStreams(builder.build(), props);
+        Topology topology = builder.build();
+        TopologyDescription describe = topology.describe();
+
+        Set<TopologyDescription.Subtopology> subtopologies = describe.subtopologies();
+        for (TopologyDescription.Subtopology subtopology : subtopologies) {
+            System.out.println("subtopology = " + subtopology);
+        }
+
+        Set<TopologyDescription.GlobalStore> globalStores = describe.globalStores();
+        for (TopologyDescription.GlobalStore globalStore : globalStores) {
+            System.out.println("globalStore = " + globalStore);
+        }
+
+        KafkaStreams kafkaStreams = new KafkaStreams(topology, props);
         kafkaStreams.start();
     }
 

@@ -1,4 +1,4 @@
-package kafkaStreams.chapter7;
+package kafkaStreams.chapter7.chapter7interceptor;
 
 import kafkaStreams.domain.ClickEvent;
 import kafkaStreams.domain.StockTransaction;
