@@ -2,7 +2,7 @@ package kafkaStreams.chapter5;
 
 
 import com.google.gson.reflect.TypeToken;
-import kafkaStreams.chapter3.FixedSizePriorityQueue;
+import kafkaStreams.util.FixedSizePriorityQueue;
 import kafkaStreams.util.GsonDeserializer;
 import kafkaStreams.util.GsonSerializer;
 import kafkaStreams.domain.*;

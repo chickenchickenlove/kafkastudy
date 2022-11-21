@@ -2,8 +2,6 @@ package kafkaStreams.util;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import kafkaStreams.chapter3.FixedSizePriorityQueue;
-import kafkaStreams.chapter3.FixedSizePriorityQueueAdapter;
 import org.apache.kafka.common.serialization.Serializer;
 
 import java.nio.charset.Charset;

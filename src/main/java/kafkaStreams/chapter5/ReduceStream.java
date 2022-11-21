@@ -1,6 +1,6 @@
 package kafkaStreams.chapter5;
 
-import kafkaStreams.chapter3.FixedSizePriorityQueue;
+import kafkaStreams.util.FixedSizePriorityQueue;
 import kafkaStreams.util.GsonDeserializer;
 import kafkaStreams.util.GsonSerializer;
 import kafkaStreams.domain.ShareVolume;

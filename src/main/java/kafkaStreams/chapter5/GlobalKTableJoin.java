@@ -84,6 +84,7 @@ public class GlobalKTableJoin {
 
         KafkaStreams kafkaStreams = new KafkaStreams(topology, props);
         kafkaStreams.start();
+
     }
 
 

@@ -27,9 +27,7 @@ public class StockPerformanceProcessor extends ContextualProcessor<String, Stock
     public void init(ProcessorContext context) {
         super.init(context);
         keyValueStore = context.getStateStore(stateStoreName);
-        StockPerformancePunctuator punctuator = new StockPerformancePunctuator(differentialThreshold,
-                context,
-                keyValueStore);
+        StockPerformancePunctuator punctuator = new StockPerformancePunctuator(differentialThreshold, context, keyValueStore);
         super.context().schedule(Duration.ofSeconds(10), PunctuationType.WALL_CLOCK_TIME, punctuator);
     }
 

@@ -1,13 +1,11 @@
 package kafkaStreams.chapter3;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import kafkaStreams.util.FixedSizePriorityQueue;
+import kafkaStreams.util.FixedSizePriorityQueueAdapter;
 import org.apache.kafka.common.serialization.Deserializer;
 
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.Map;
 

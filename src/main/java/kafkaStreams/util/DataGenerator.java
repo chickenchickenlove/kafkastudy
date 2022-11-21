@@ -157,6 +157,7 @@ public class DataGenerator {
                     .withIndustry(company.getIndustry()).withSector(company.getSector()).withSharePrice(company.updateStockPrice()).withShares(numberShares)
                     .withSymbol(company.getSymbol()).withPurchase(true).build();
             transactions.add(transaction);
+            System.out.println("symbol = " + transaction.getSymbol());
         }
         return transactions;
     }

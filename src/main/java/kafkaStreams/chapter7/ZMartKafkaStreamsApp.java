@@ -8,15 +8,19 @@ import kafkaStreams.util.GsonDeserializer;
 import kafkaStreams.util.GsonSerializer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.serialization.Serde;
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.*;
 import org.apache.kafka.streams.errors.StreamsUncaughtExceptionHandler;
 import org.apache.kafka.streams.kstream.*;
+import org.apache.kafka.streams.processor.StateRestoreListener;
 
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.apache.kafka.streams.KafkaStreams.State.CREATED;
 import static org.apache.kafka.streams.KafkaStreams.State.RUNNING;
@@ -74,15 +78,6 @@ public class ZMartKafkaStreamsApp {
         KStream<String, RewardAccumulator> rewardAccumulatorKStream = purchaseKStream.mapValues(value -> RewardAccumulator.builder(value).build());
         KStream<Long, Purchase> purchaseFilterStream = purchaseKStream.filter((key, value) -> value.getPrice() > 5.00).selectKey(purchaseFilterStreamNewKey);
 
-        // foreach 설정
-//        ForeachAction<String, Purchase> purchaseDBForeach = (key, value) -> log.info("key = {}, value = {}", key, value);
-//        purchaseKStream.foreach(purchaseDBForeach);
-
-        // print 설정
-//        purchaseKStream.print(Printed.<String, Purchase>toSysOut().withLabel("purchaseKStream"));
-//        purchasePatternKStream.print(Printed.<String, PurchasePattern>toSysOut().withLabel("purchasePattern"));
-//        rewardAccumulatorKStream.print(Printed.<String, RewardAccumulator>toSysOut().withLabel("rewardAccumulatorKStream"));
-//        purchaseFilterStream.print(Printed.<Long, Purchase>toSysOut().withLabel("purchaseFilterStream"));
 
         // sink 설정
         purchasePatternKStream.to("patterns", Produced.with(stringSerde, purchasePatternSerde));
@@ -97,6 +92,8 @@ public class ZMartKafkaStreamsApp {
         for (TopologyDescription.Subtopology subtopology : subtopologies) {
             System.out.println("subtopology = " + subtopology);
         }
+
+
 
         Set<TopologyDescription.GlobalStore> globalStores = describe.globalStores();
         for (TopologyDescription.GlobalStore globalStore : globalStores) {
@@ -123,10 +120,45 @@ public class ZMartKafkaStreamsApp {
         };
 
 
+        StateRestoreListener stateRestoreListener = new StateRestoreListener() {
+            // 각 토픽 파티션 별로 복구해야할 offset을 기록한다.
+            private Map<TopicPartition, Long> totalToRestore = new ConcurrentHashMap<>();
+
+            // 각 토픽 파티션 별로 최종 복구된 offset를 기록한다.
+            private Map<TopicPartition, Long> restoredSoFar = new ConcurrentHashMap<>();
+
+            @Override
+            public void onRestoreStart(TopicPartition topicPartition, String storeName, long startingOffset, long endingOffset) {
+                long toRestore = endingOffset - startingOffset;
+                totalToRestore.put(topicPartition, toRestore);
+                log.info("start restore. restore target : {}, topicPartition : {}, record to Restore : {}", storeName, topicPartition, toRestore);
+            }
+
+            @Override
+            public void onBatchRestored(TopicPartition topicPartition, String storeName, long batchEndOffset, long numRestored) {
+
+                // 복원된 전체 레코드 수 계산
+                long currentProgress = batchEndOffset + restoredSoFar.getOrDefault(topicPartition, 0L);
+                double percentComplete = (double) currentProgress / totalToRestore.get(topicPartition);
+                log.info("restore progress : {}, progress Percent : {}, Target store : {}, topicPartition : {}",
+                        currentProgress, percentComplete, storeName, topicPartition );
+
+                // 복원된 레코드 수를 저장한다.
+                restoredSoFar.put(topicPartition, currentProgress);
+            }
+
+            @Override
+            public void onRestoreEnd(TopicPartition topicPartition, String storeName, long totalRestored) {
+                log.info("Restore Completed : {}, topicPartition : {}", storeName, topicPartition);
+            }
+        };
+
+
         // stream 시작
         KafkaStreams kafkaStreams = new KafkaStreams(topology, props);
         kafkaStreams.setStateListener(stateListener);
         kafkaStreams.setUncaughtExceptionHandler(streamsUncaughtExceptionHandler);
+        kafkaStreams.setGlobalStateRestoreListener(stateRestoreListener);
 
 
         kafkaStreams.start();

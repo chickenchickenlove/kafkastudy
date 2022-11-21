@@ -1,4 +1,4 @@
-package kafkaStreams.chapter3;
+package kafkaStreams.util;
 
 import com.google.gson.Gson;
 import com.google.gson.TypeAdapter;
