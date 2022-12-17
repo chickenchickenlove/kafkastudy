@@ -17,6 +17,4 @@ if __name__ == '__main__':
     run script /create_user_profile.ksql;
     run script /user_profile_pretty.ksql;
     run script /create_country_table.ksql;
-
-
     """

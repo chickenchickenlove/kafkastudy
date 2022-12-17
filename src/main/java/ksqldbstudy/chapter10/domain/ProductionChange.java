@@ -15,7 +15,7 @@ public class ProductionChange {
     private String changeType;
     private SessionLength before;
     private SessionLength after;
-    private Date date;
+    private Date createdAt;
 
 
 
