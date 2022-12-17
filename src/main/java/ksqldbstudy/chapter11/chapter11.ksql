@@ -1,0 +1,89 @@
+--
+CREATE STREAM start_watching_events(
+    sessionId INT,
+    titleId VARCHAR,
+    createdAt VARCHAR
+) WITH ( 
+    KAFKA_TOPIC = 'start-session',
+    VALUE_FORMAT = 'JSON',
+    -- PARTITIONS = 4,
+    TIMESTAMP = 'createdAt',
+    TIMESTAMP_FORMAT = 'MMM dd, yyyy, hh:mm:ss a'
+)
+--
+CREATE STREAM end_watching_events(
+    sessionId INT,
+    titleId VARCHAR,
+    createdAt VARCHAR
+) WITH ( 
+    KAFKA_TOPIC = 'start-session',
+    VALUE_FORMAT = 'JSON',
+    -- PARTITIONS = 4,
+    TIMESTAMP = 'createdAt',
+    TIMESTAMP_FORMAT = 'MMM dd, yyyy, hh:mm:ss a'
+)
+-- 
+CREATE STREAM aggregate_window_join
+WITH(
+    KAFKA_TOPIC = 'aggregate_window_join',
+    VALUE_FORMAT = 'JSON'
+) AS 
+SELECT 
+    A.titleId as titleId,
+    A.sessionId as sessionId
+FROM start_watching_events A
+INNER JOIN end_watching_events B
+WITHIN 2 MINUTES
+ON a.sessionId = b.sessionId
+EMIT CHANGES;
+--
+CREATE STREAM season_length_changes_enriched
+WITH(
+    KAFKA_TOPIC = 'season_length_changes_enriched',
+    VALUE_FORMAT = 'JSON',
+    PARTITIONS = 4,
+    TIMESTAMP = 'createdAt',
+    TIMESTAMP_FORMAT = 'MMM dd, yyyy, hh:mm:ss a'
+) AS
+SELECT
+    s.titleId,
+    t.title,
+    s.seasonId,
+    s.oldEpisodeCount,
+    s.newEpisodeCount,
+    s.createdAt
+FROM season_length_changes s
+INNER JOIN titles t
+ON s.titleId = t.id
+EMIT CHANGES;
+-- 
+CREATE TABLE season_length_change_counts1
+WITH(
+    KAFKA_TOPIC = 'season_length_change_counts',
+    KEY_FORMAT = 'JSON',
+    VALUE_FORMAT = 'JSON',
+    PARTITIONS = 1
+) AS
+SELECT
+    titleId,
+    seasonId,
+    COUNT(*) AS changeCount,
+    LATEST_BY_OFFSET(newEpisodeCount) AS episodeCount
+FROM season_length_changes_enriched
+WINDOW TUMBLING (
+    SIZE 1 HOUR,
+    RETENTION 2 DAYS,
+    GRACE PERIOD 10 MINUTES
+)
+GROUP BY titleId, seasonId
+EMIT CHANGES;
+
+
+
+
+
+
+
+
+
+

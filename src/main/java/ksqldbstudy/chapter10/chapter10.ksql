@@ -1,0 +1,65 @@
+CREATE TYPE session_length AS STRUCT<seasonId INT, episodeCount INT>;
+
+--
+CREATE STREAM titles_stream(
+    id BIGINT,
+    title VARCHAR,
+    onSchedule Boolean
+)WITH(
+    KAFKA_TOPIC = 'titles',
+    VALUE_FORMAT = 'JSON'
+);
+--
+CREATE STREAM titles_temp_rekey_stream
+WITH (
+    KAFKA_TOPIC = 'titles_rekey', 
+    PARTITIONS = 4
+) AS
+SELECT id, title, onSchedule
+FROM titles_stream
+PARTITION BY id;
+-- 
+CREATE TABLE titles (
+    id BIGINT PRIMARY KEY,
+    title VARCHAR,
+    onSchedule Boolean
+)WITH(
+    KAFKA_TOPIC = 'titles_rekey',
+    VALUE_FORMAT = 'JSON'
+);
+--
+CREATE STREAM production_change(
+    uuid VARCHAR,
+    titleId BIGINT,
+    changeType VARCHAR,
+    before session_length,
+    after session_length,
+    createdAt VARCHAR
+)WITH(
+    KAFKA_TOPIC = 'production_changes',
+    VALUE_FORMAT = 'JSON',
+    TIMESTAMP = 'createdAt',
+    TIMESTAMP_FORMAT = 'MMM dd, yyyy, hh:mm:ss a'
+);
+
+--
+CREATE STREAM season_length_changes 
+WITH (
+    KAFKA_TOPIC = 'season_length_changes',
+    VALUE_FORMAT = 'JSON',
+    PARTITIONS = '4',
+    REPLICAS = '1'
+) AS 
+    SELECT
+        titleId, 
+        CASE
+            when after->seasonId IS NOT NULL then after->seasonId
+            when before->seasonId IS NOT NULL then before->seasonId
+        END as seasonId,
+        before->episodeCount as oldEpisodeCount,
+        after->episodeCount as newEpisodeCount,
+        createdAt
+    FROM production_change
+    WHERE changeType = 'season_length';
+    EMIT CHANGES
+--
