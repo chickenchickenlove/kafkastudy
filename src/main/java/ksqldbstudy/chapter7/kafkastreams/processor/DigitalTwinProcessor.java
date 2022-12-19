@@ -29,7 +29,7 @@ public class DigitalTwinProcessor implements Processor<String, TurbineState, Str
     public void init(ProcessorContext<String, DigitalTwin> context) {
         Processor.super.init(context);
         this.context = context;
-        context.getStateStore(this.storeName);
+        this.store = context.getStateStore(this.storeName);
         context.schedule(Duration.ofMinutes(5), PunctuationType.WALL_CLOCK_TIME, this::enforceTtl);
     }
 

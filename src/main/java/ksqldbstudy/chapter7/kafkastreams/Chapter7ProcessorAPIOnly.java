@@ -45,8 +45,9 @@ public class Chapter7ProcessorAPIOnly {
                 Stores.persistentKeyValueStore("digital-twin-store"),
                 Serdes.String(), digitalTwinSerde);
 
+        topology.addProcessor("digital-twin-store-node", () -> new DigitalTwinProcessor("digital-twin-store"),
+                "high-winds-node", "desired-state-event-node");
         topology.addStateStore(digitalTwinStoreBuilder, "digital-twin-store-node");
-        topology.addProcessor("digital-twin-store-node", () -> new DigitalTwinProcessor("digital-twin-store"));
 
         topology.addSink("digital-twin-sink",
                 "digital-twins",

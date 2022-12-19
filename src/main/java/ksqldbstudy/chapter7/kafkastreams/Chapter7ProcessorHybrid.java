@@ -23,10 +23,7 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.apache.kafka.streams.state.StoreBuilder;
 import org.apache.kafka.streams.state.Stores;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
-import java.util.UUID;
+import java.util.*;
 
 public class Chapter7ProcessorHybrid {
     public static void main(String[] args) {
@@ -47,7 +44,8 @@ public class Chapter7ProcessorHybrid {
 
         // filter + merge
         KStream<String, TurbineState> mergedProcessor = reportedStream.flatMapValues((ValueMapperWithKey<String, TurbineState, Iterable<TurbineState>>) (readOnlyKey, reportedValue) -> {
-                    List<TurbineState> turbineStates = Collections.singletonList(reportedValue);
+                    List<TurbineState> turbineStates = new ArrayList<>();
+                    turbineStates.add(reportedValue);
                     if (reportedValue.getWindSpeedMph() > 65 && reportedValue.getPower().equals(Power.ON)) {
                         TurbineState desired = reportedValue.clone();
                         desired.setType(Type.DESIRED);
@@ -58,14 +56,18 @@ public class Chapter7ProcessorHybrid {
                 }
         ).merge(desiredStream);
 
-        mergedProcessor.process(() -> new DigitalTwinProcessor("digital-twin-store"), "digital-twin-store")
-                .to("digital-twins", Produced.with(Serdes.String(), digitalTwinSerde));
-
         StoreBuilder<KeyValueStore<String, DigitalTwin>> digitalTwinStoreBuilder = Stores.keyValueStoreBuilder(
                 Stores.persistentKeyValueStore("digital-twin-store"),
                 Serdes.String(), digitalTwinSerde);
 
         builder.addStateStore(digitalTwinStoreBuilder);
+
+        KStream<String, DigitalTwin> lastProcessor = mergedProcessor.process(() -> new DigitalTwinProcessor("digital-twin-store"), "digital-twin-store");
+        lastProcessor.to("digital-twins", Produced.with(Serdes.String(), digitalTwinSerde));
+        lastProcessor.print(Printed.<String, DigitalTwin>toSysOut().withLabel("[HELLO]"));
+
+
+
 
         Properties props = new Properties();
         props.setProperty(StreamsConfig.APPLICATION_ID_CONFIG, UUID.randomUUID().toString());
