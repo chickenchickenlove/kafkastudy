@@ -52,6 +52,9 @@ services:
       KSQL_BOOTSTRAP_SERVERS: broker:29092
       KSQL_KSQL_LOGGING_PROCESSING_STREAM_AUTO_CREATE: "true"
       KSQL_KSQL_LOGGING_PROCESSING_TOPIC_AUTO_CREATE: "true"
+      KSQL_KSQL_EXTENSION_DIR: "/home/appuser/udf"
+    volumes:
+      - "./udf/:/home/appuser/udf"
 
   ksqldb-cli:
     image: confluentinc/ksqldb-cli:0.28.2
@@ -61,14 +64,3 @@ services:
       - ksqldb-server
     entrypoint: /bin/sh
     tty: true
-
-  kafdrop:
-    image: obsidiandynamics/kafdrop
-    container_name: kafdrop
-    restart: "no"
-    ports:
-      - "9000:9000"
-    environment:
-      KAFKA_BROKER_CONNECT: "broker:29092"
-    depends_on:
-      - broker
